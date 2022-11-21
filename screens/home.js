@@ -1,9 +1,15 @@
 import { View, Text } from "react-native";
+import { createMaterialBottomTabNavigator } from "@react-navigation/material-bottom-tabs";
+import Profile from "./profile";
+import Accueil from "./accueil";
+
+const Tab = createMaterialBottomTabNavigator();
 
 export default function Home() {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>Home Screen</Text>
-    </View>
+    <Tab.Navigator>
+      <Tab.Screen name="profile" component={Profile} />
+      <Tab.Screen name="accueil" component={Accueil} />
+    </Tab.Navigator>
   );
 }

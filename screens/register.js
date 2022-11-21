@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { TextInput, TouchableOpacity } from "react-native";
 import { Colors } from "react-native-paper";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import initFirebase from "../config";
 
 const image = {
   uri: "https://images.rawpixel.com/image_600/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZmMjk1OS1pbWFnZS1rd3Z4M2EzMS5qcGc.jpg",
@@ -16,6 +17,8 @@ export default function Register({ navigation }) {
   const [email, setEmail] = useState("");
   const [pwd, setpwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
+
+  auth = initFirebase.auth();
 
   return (
     <View style={styles.container}>
@@ -67,7 +70,14 @@ export default function Register({ navigation }) {
           ></TextInput>
           <Button
             onPress={() => {
-              navigation.push("home");
+              auth
+                .createUserWithEmailAndPassword(email, pwd)
+                .then(() => {
+                  navigation.replace("home");
+                })
+                .catch((err) => {
+                  alert(err);
+                });
             }}
             title="Register"
             color="#F99D78"
