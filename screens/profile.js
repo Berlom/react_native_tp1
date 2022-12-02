@@ -1,14 +1,63 @@
-import { View, Text, Image, TextInput, StyleSheet, Button } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TextInput,
+  StyleSheet,
+  Button,
+  TouchableOpacity,
+} from "react-native";
 import { useState } from "react";
 import { Colors } from "react-native-paper";
 import initFirebase from "../config";
+import * as ImagePicker from "expo-image-picker";
 
 export default function Profile() {
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [pseudo, setPseudo] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const database = initFirebase.database();
+  const storage = initFirebase.storage();
+  const pickImageAsync = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    } else {
+      alert("You did not select any image.");
+    }
+  };
+
+  const imgToBlob = async (uri) => {
+    const blob = new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        resolve(xhr.response);
+      };
+      xhr.onerror = (e) => {
+        reject(new TypeError("Network request failed"));
+      };
+      xhr.responseType = "blob";
+      xhr.open("GET", uri, true);
+      xhr.send(null);
+    });
+    return blob;
+  };
+
+  const uploadImage = async (uri) => {
+    //convertir image to blob
+    const blob = await imgToBlob(uri);
+    //save blob into reference
+    const refImage = storage.ref().child("imagesProfiles").child("image.jpg");
+    await refImage.put(blob);
+    //get download url
+    const url = await refImage.getDownloadURL();
+    return url;
+  };
   return (
     <View
       style={{
@@ -24,14 +73,29 @@ export default function Profile() {
         Profile
       </Text>
 
-      <Image
-        source={require("../assets/profile.png")}
-        style={{
-          resizeMode: "contain",
-          height: 200,
-          width: 200,
-        }}
-      />
+      <TouchableOpacity onPress={pickImageAsync}>
+        {selectedImage ? (
+          <Image
+            source={{ uri: selectedImage }}
+            style={{
+              resizeMode: "contain",
+              height: 200,
+              width: 200,
+              borderRadius: 200 / 2,
+            }}
+          />
+        ) : (
+          <Image
+            source={require("../assets/profile.png")}
+            style={{
+              resizeMode: "contain",
+              height: 200,
+              width: 200,
+              borderRadius: 200 / 2,
+            }}
+          />
+        )}
+      </TouchableOpacity>
 
       <TextInput
         onChange={(nom) => {
@@ -61,12 +125,19 @@ export default function Profile() {
         style={styles.textinputstyle}
       ></TextInput>
       <Button
-        onPress={() => {
-          database.ref("profils").child("profil").set({
-            nom: nom,
-            prenom: prenom,
-            pseudo: pseudo,
-          });
+        onPress={async () => {
+          if (selectedImage) {
+            const url = await uploadImage(selectedImage);
+
+            const ref_profile = database.ref("profils");
+            const key = ref_profile.push().key;
+            ref_profile.child("profil" + key).set({
+              nom: nom,
+              prenom: prenom,
+              pseudo: pseudo,
+              image: url,
+            });
+          }
         }}
         title="Save"
         color={Colors.blueGrey700}
