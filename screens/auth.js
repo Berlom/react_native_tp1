@@ -16,7 +16,9 @@ const Stack = createNativeStackNavigator();
 export default function Auth({ navigation }) {
   const [email, setEmail] = useState("");
   const [pwd, setpwd] = useState("");
-  auth = initFirebase.auth();
+  const auth = initFirebase.auth();
+  const database = initFirebase.database();
+  const ref_connecte = database.ref("isConnected");
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -60,6 +62,9 @@ export default function Auth({ navigation }) {
               auth
                 .signInWithEmailAndPassword(email, pwd)
                 .then(() => {
+                  ref_connecte
+                    .child(email.split("@")[0])
+                    .set({ isConnected: true });
                   navigation.replace("home");
                 })
                 .catch((err) => {

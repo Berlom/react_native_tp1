@@ -18,6 +18,7 @@ export default function Profile() {
   const [pseudo, setPseudo] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const auth = initFirebase.auth();
   const database = initFirebase.database();
   const storage = initFirebase.storage();
   const pickImageAsync = async () => {
@@ -130,13 +131,15 @@ export default function Profile() {
             const url = await uploadImage(selectedImage);
 
             const ref_profile = database.ref("profils");
-            const key = ref_profile.push().key;
-            ref_profile.child("profil" + key).set({
-              nom: nom,
-              prenom: prenom,
-              pseudo: pseudo,
-              image: url,
-            });
+            ref_profile
+              .child("profil-" + auth.currentUser.email.split("@")[0])
+              .set({
+                nom: nom,
+                prenom: prenom,
+                pseudo: pseudo,
+                image: url,
+                email: auth.currentUser.email,
+              });
           }
         }}
         title="Save"
